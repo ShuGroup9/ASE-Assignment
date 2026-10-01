@@ -1,0 +1,65 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches: [master, develop]
+    types: [opened, edited, synchronise, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-name:
+    name: Branch name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source branch is allowed for this target
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # Which branches may open a PR into which target.
+          case "$BASE_REF" in
+            develop) allowed='^(feature|bugfix|hotfix|release|dependabot)/.+' ;;
+            master)  allowed='^(develop$|release/.+|hotfix/.+)' ;;
+            *)       echo "No rule for target '$BASE_REF'"; exit 0 ;;
+          esac
+          if [[ "$HEAD_REF" =~ $allowed ]]; then
+            echo "'$HEAD_REF' -> '$BASE_REF' is allowed"
+          else
+            echo "::error::Branch '$HEAD_REF' cannot be merged into '$BASE_REF'."
+            echo "Into develop: feature/*, bugfix/*, hotfix/*, release/*"
+            echo "Into master:    develop, release/*, hotfix/*"
+            exit 1
+          fi
+
+  commit-messages:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock @commitlint/cli@19 @commitlint/config-conventional@19
+      - name: Lint every commit in the PR
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npx commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+
+  pr-title:
+    name: PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock @commitlint/cli@19 @commitlint/config-conventional@19
+      - name: Lint the PR title (it becomes the squash commit message)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | npx commitlint --verbose

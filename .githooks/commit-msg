@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Rejects commit messages that do not follow Conventional Commits.
+
+msg_file="$1"
+# First line that isn't a comment
+header="$(grep -v '^#' "$msg_file" | sed '/^[[:space:]]*$/d' | head -n1)"
+
+# Let git's own messages through
+case "$header" in
+  "Merge "*|"Revert "*|"fixup! "*|"squash! "*|"amend! "*) exit 0 ;;
+esac
+
+types='build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test'
+pattern="^($types)(\([a-z0-9._/-]+\))?!?: [^ ].*"
+
+if ! printf '%s' "$header" | grep -Eq "$pattern"; then
+  cat >&2 <<MSG
+
+ERR: Commit message doesn't follow Conventional Commits:
+    $header
+
+  Format:  <type>(<optional scope>): <description>
+  Types:   ${types//|/, }
+  Examples:
+    feat(auth): add password reset
+    fix: handle empty cart on checkout
+    docs: update setup instructions
+    feat(api)!: drop v1 endpoints   (! = breaking change)
+
+MSG
+  exit 1
+fi
+
+if [ "${#header}" -gt 100 ]; then
+  echo "ERR: Commit header is ${#header} characters; keep it to 100 or fewer." >&2
+  exit 1
+fi
