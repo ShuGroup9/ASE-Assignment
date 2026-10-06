@@ -3,7 +3,7 @@ name: PR checks
 on:
   pull_request:
     branches: [master, develop]
-    types: [opened, edited, synchronise, reopened]
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
