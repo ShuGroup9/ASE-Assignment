@@ -1,0 +1,31 @@
+name: Dependabot label fallback
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  fallback:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply default labels if the PR has none
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          count="$(gh pr view "$PR" -R "$REPO" --json labels --jq '.labels | length')"
+          if [ "$count" -gt 0 ]; then
+            echo "PR already has $count label(s); nothing to do."
+            exit 0
+          fi
+          gh label create dependencies -R "$REPO" --color 0366d6 \
+            --description "Pull requests that update a dependency file" 2>/dev/null || true
+          gh label create github_actions -R "$REPO" --color 000000 \
+            --description "Pull requests that update GitHub Actions code" 2>/dev/null || true
+          gh pr edit "$PR" -R "$REPO" --add-label dependencies,github_actions
