@@ -8,3 +8,5 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+    labels:
+      - "Affects: Infrastructure"
