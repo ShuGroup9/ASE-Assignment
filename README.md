@@ -1,12 +1,12 @@
-# ASE\-Assignment
+# ASE-Assignment
 
 Service for education sector for tracking individual contributions to a group software project.
 
 ## Getting started
 
 ```bash
-git clone https://github.com/ShuGroup9/ASE\-Assignment.git
-cd ASE\-Assignment
+git clone https://github.com/ShuGroup9/ASE-Assignment.git
+cd ASE-Assignment
 ./scripts/install-hooks.sh  # once per clone
 ```
 
