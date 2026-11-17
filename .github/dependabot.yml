@@ -10,3 +10,29 @@ updates:
       include: scope
     labels:
       - "Affects: Infrastructure"
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    labels:
+      - "Affects: Infrastructure"
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # Pinned image versions in infra/docker-compose.yml (postgres, nginx, mailpit, openssl).
+  - package-ecosystem: docker-compose
+    directory: /infra
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+      include: scope
+    labels:
+      - "Affects: Infrastructure"

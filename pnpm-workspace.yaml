@@ -1,0 +1,7 @@
+# pnpm only runs install scripts for packages listed here (true = allowed).
+allowBuilds:
+  esbuild: true
+  protobufjs: true
+  ssh2: true
+  # Optional native speed-up for ssh2 (via testcontainers); needs node-gyp. Not required.
+  cpu-features: false
