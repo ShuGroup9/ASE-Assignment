@@ -37,29 +37,29 @@ jobs:
     name: Commit messages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: pnpm/setup@v3.2.0
         with:
-          node-version: 22
-      - run: npm install --no-save --no-package-lock @commitlint/cli@19 @commitlint/config-conventional@19
+          cache: true
+          require-lockfile: true
       - name: Lint every commit in the PR
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: npx commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+        run: pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
 
   pr-title:
     name: PR title
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/setup@v3.2.0
         with:
-          node-version: 22
-      - run: npm install --no-save --no-package-lock @commitlint/cli@19 @commitlint/config-conventional@19
+          cache: true
+          require-lockfile: true
       - name: Lint the PR title (it becomes the squash commit message)
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: printf '%s\n' "$PR_TITLE" | npx commitlint --verbose
+        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint --verbose

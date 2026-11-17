@@ -1,0 +1,122 @@
+name: CI
+
+# Every PR into develop/master and every push to them.
+# Jobs: quality -> (unit, integration, e2e)
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+  DEPLOY_ENV: ci
+
+jobs:
+  quality:
+    name: Lint, types, audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/setup@v3.2.0
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm lint --max-warnings=0
+      - run: pnpm typecheck
+      - name: No known high/critical vulnerabilities in runtime deps
+        run: pnpm audit --prod --audit-level high
+
+  unit:
+    name: Unit + component tests
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/setup@v3.2.0
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm exec vitest run --project unit --project component --coverage --outputFile.json=reports/vitest-unit.json
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: reports-unit
+          path: reports/
+          if-no-files-found: ignore
+
+  integration:
+    name: Integration tests (PostgreSQL + Mailpit via Testcontainers)
+    needs: quality
+    runs-on: ubuntu-latest
+    # No service containers: tests/integration/global-setup.ts starts its own PostgreSQL and Mailpit.
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/setup@v3.2.0
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm exec vitest run --project integration --outputFile.json=reports/vitest-integration.json
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: reports-integration
+          path: reports/
+          if-no-files-found: ignore
+
+  e2e:
+    name: E2E + accessibility (Playwright, axe)
+    needs: quality
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.7-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.34
+        ports: ["1025:1025", "8025:8025"]
+    env:
+      # One app connection per database in src/db/databases.ts (same values as .env.example)
+      AUTH_DATABASE_URL: postgres://auth_app:auth_app_dev@localhost:5432/auth_db
+      SESSION_DATABASE_URL: postgres://session_app:session_app_dev@localhost:5432/session_db
+      ENGAGEMENT_DATABASE_URL: postgres://engagement_app:engagement_app_dev@localhost:5432/engagement_db
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/setup@v3.2.0
+        with:
+          cache: true
+          require-lockfile: true
+      - name: Create databases and roles (same files the local postgres container runs)
+        run: |
+          for f in infra/postgres/init/*.sql; do
+            echo "Running $f"
+            psql "postgres://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -f "$f"
+          done
+      - name: Migrate every database
+        env:
+          AUTH_MIGRATE_URL: postgres://auth_owner:auth_owner_dev@localhost:5432/auth_db
+          SESSION_MIGRATE_URL: postgres://session_owner:session_owner_dev@localhost:5432/session_db
+          ENGAGEMENT_MIGRATE_URL: postgres://engagement_owner:engagement_owner_dev@localhost:5432/engagement_db
+        run: pnpm db:migrate
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: reports-e2e
+          path: reports/
+          if-no-files-found: ignore

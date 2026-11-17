@@ -6,10 +6,34 @@ Thumbs.db
 !.vscode/extensions.json
 *.swp
 
-# Dependencies & build output
+# Dependencies
 node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+
+# Build output
 dist/
 build/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment variables - only the example is committed
 .env
 .env.*
 !.env.example
+
+# Test output (CI uploads these as artifacts)
+reports/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Local TLS material (dev certs live in the nginxcerts Docker volume, never in git)
+*.pem
+*.key
+*.crt
