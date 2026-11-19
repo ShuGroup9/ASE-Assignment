@@ -38,7 +38,7 @@ jobs:
 
       - name: HTTP redirects to HTTPS with 301
         run: |
-          read code location < <(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" http://localhost:8080/)
+          read code location < <(curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:8080/)
           echo "HTTP -> $code $location"
           test "$code" = "301" && [[ "$location" == https://* ]]
 
