@@ -6,9 +6,9 @@ name: Security scan
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 5 * * 1" # Mondays 05:17 UTC
+    - cron: "1 5 * * *" # Daily @ 05:01 UTC
   pull_request:
-    branches: [master]
+    branches: [develop, master]
 
 permissions:
   contents: read
@@ -38,7 +38,7 @@ jobs:
 
       - name: HTTP redirects to HTTPS with 301
         run: |
-          read code location < <(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" http://localhost:8080/)
+          read code location < <(curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://localhost:8080/)
           echo "HTTP -> $code $location"
           test "$code" = "301" && [[ "$location" == https://* ]]
 
