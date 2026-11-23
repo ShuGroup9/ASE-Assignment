@@ -1,9 +1,14 @@
+/**
+ * @file src/proxy.ts
+ * @description Per-request CSP nonce, plus an optimistic redirect to /sign-in when no session cookie is present
+ *              (cookie check only, no DB).
+ * @owner Kuba Gorski (@gitbob2000)
+ * @slice Slice1
+ */
+
 import { type NextRequest, NextResponse } from "next/server";
 
-/**
- * Per-request Content-Security-Policy.
- * Checked by the OWASP ZAP baseline in .github/workflows/security.yml.
- */
+//Checked by the OWASP ZAP baseline in .github/workflows/security.yml.
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
