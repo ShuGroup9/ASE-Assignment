@@ -105,7 +105,12 @@ All three use the same init SQL and the same migrations, so if it works in one i
 cp .env.example .env.local
 pnpm infra:up       # starts Postgres (all three databases), Mailpit, nginx
 pnpm db:migrate     # creates the tables in every database
+pnpm db:seed:demo   # optional: demo users you can sign in as (demo/users.json)
 ```
+
+Demo users all share one password: `Demo-Password-1!` locally and in CI, or whatever `DEMO_PASSWORD` is set
+to. Outside local/CI `DEMO_PASSWORD` is required, and the seed refuses to run when `DEPLOY_ENV=production`.
+Re-running it updates the same users (matched by id) and resets their passwords.
 
 Connect with any SQL client (DataGrip, `psql`, other.) as a database's owner, e.g.:
 
@@ -125,6 +130,7 @@ Useful commands:
 | `pnpm db:generate` | Check every database and create migrations for any whose schema changed (default names) |
 | `pnpm db:migrate` | Apply pending migrations to every database |
 | `pnpm db:migrate <name>` | Apply pending migrations to one database |
+| `pnpm db:seed:demo` | Insert/update the demo users from `demo/users.json` in `auth_db` |
 
 ---
 

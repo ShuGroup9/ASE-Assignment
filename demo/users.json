@@ -1,0 +1,54 @@
+{
+  "$comment": "Demo personas for local/CI/staging demos (fake data only). Passwords are NOT stored here: db/seed-demo.ts hashes DEMO_PASSWORD for every user.",
+  "users": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "email": "j.smith@student.example.ac.uk",
+      "displayName": "Joe Smith",
+      "role": "student",
+      "status": "active"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "email": "a.anderson@student.example.ac.uk",
+      "displayName": "Alice Anderson",
+      "role": "student",
+      "status": "active"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "email": "b.okafor@student.example.ac.uk",
+      "displayName": "Bob Taylor",
+      "role": "student",
+      "status": "active"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "email": "s.nowak@student.example.ac.uk",
+      "displayName": "Stuart Nowak",
+      "role": "student",
+      "status": "disabled"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000101",
+      "email": "a.john@example.ac.uk",
+      "displayName": "Dr A John",
+      "role": "supervisor",
+      "status": "active"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000102",
+      "email": "s.lee@example.ac.uk",
+      "displayName": "Dr Sam Lee",
+      "role": "supervisor",
+      "status": "active"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000201",
+      "email": "admin@example.ac.uk",
+      "displayName": "Site Admin",
+      "role": "admin",
+      "status": "active"
+    }
+  ]
+}
