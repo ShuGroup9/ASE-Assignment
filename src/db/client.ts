@@ -24,7 +24,7 @@ const shared = new Map<DatabaseName, unknown>();
 /**
  * The app's shared client for one database, connected as that database's least-privilege role.
  *
- *   const users = await db("auth").select().from(userAccount);
+ *   const users = await db("auth").select().from(user);
  */
 export function db<N extends DatabaseName>(name: N): Database<N> {
   if (!shared.has(name)) {

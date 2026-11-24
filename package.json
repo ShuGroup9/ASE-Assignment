@@ -32,9 +32,11 @@
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:reset": "docker compose -f infra/docker-compose.yml down -v && pnpm infra:up",
     "db:generate": "tsx db/generate.ts",
-    "db:migrate": "tsx --env-file-if-exists=.env.local db/migrate.ts"
+    "db:migrate": "tsx --env-file-if-exists=.env.local db/migrate.ts",
+    "db:seed:demo": "tsx --env-file-if-exists=.env.local db/seed-demo.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
     "bootstrap": "6.0.0-alpha.1",
     "drizzle-orm": "^0.45.4",
     "next": "^16.4.6",
