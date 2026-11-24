@@ -20,8 +20,8 @@ nothing is shared between them:
 
 | Database | Holds | App role | Schema | Migrations |
 | --- | --- | --- | --- | --- |
-| `auth_db` | Accounts and credentials | `auth_app` | `src/db/auth/schema.ts` | `db/migrations/auth/` |
-| `session_db` | Sign-in sessions | `session_app` | `src/db/session/schema.ts` | `db/migrations/session/` |
+| `auth_db` | Accounts, login attempts, reset tokens, audit log, OAuth tokens | `auth_app` | `src/db/auth/schema.ts` | `db/migrations/auth/` |
+| `session_db` | Sign-in sessions (token hashes only) | `session_app` | `src/db/session/schema.ts` | `db/migrations/session/` |
 | `engagement_db` | The main project data | `engagement_app` | `src/db/engagement/schema.ts` | `db/migrations/engagement/` |
 
 The list lives in **`src/db/databases.ts`**. Everything else (scripts, settings, tests) reads it, and
@@ -105,7 +105,12 @@ All three use the same init SQL and the same migrations, so if it works in one i
 cp .env.example .env.local
 pnpm infra:up       # starts Postgres (all three databases), Mailpit, nginx
 pnpm db:migrate     # creates the tables in every database
+pnpm db:seed:demo   # optional: demo users you can sign in as (demo/users.json)
 ```
+
+Demo users all share one password: `Demo-Password-1!` locally and in CI, or whatever `DEMO_PASSWORD` is set
+to. Outside local/CI `DEMO_PASSWORD` is required, and the seed refuses to run when `DEPLOY_ENV=production`.
+Re-running it updates the same users (matched by id) and resets their passwords.
 
 Connect with any SQL client (DataGrip, `psql`, other.) as a database's owner, e.g.:
 
@@ -125,6 +130,7 @@ Useful commands:
 | `pnpm db:generate` | Check every database and create migrations for any whose schema changed (default names) |
 | `pnpm db:migrate` | Apply pending migrations to every database |
 | `pnpm db:migrate <name>` | Apply pending migrations to one database |
+| `pnpm db:seed:demo` | Insert/update the demo users from `demo/users.json` in `auth_db` |
 
 ---
 
@@ -137,11 +143,11 @@ it from a Client Component will fail the build).
 // e.g. in a Server Component, route handler or server action
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { userAccount } from "@/db/auth/schema";
+import { user } from "@/db/auth/schema";
 import { session } from "@/db/session/schema";
 
-const [user] = await db("auth").select().from(userAccount).where(eq(userAccount.email, email));
-await db("session").insert(session).values({ id: token, userId: user.id, expiresAt });
+const [account] = await db("auth").select().from(user).where(eq(user.email, email));
+await db("session").insert(session).values({ idHash: sha256(token), userId: account.id, expiresAt });
 ```
 
 **Always import tables from the same database you query** (`db("auth")` with `@/db/auth/schema`).
@@ -164,7 +170,7 @@ First decide **which database** the data belongs in. Everything below is per dat
 
 ```ts
 // src/db/engagement/schema.ts
-import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const team = pgTable("team", {
   id: serial("id").primaryKey(),
@@ -175,7 +181,7 @@ export const team = pgTable("team", {
 export const teamMember = pgTable("team_member", {
   id: serial("id").primaryKey(),
   teamId: integer("team_id").notNull().references(() => team.id, { onDelete: "cascade" }), // same database: OK
-  userId: integer("user_id").notNull(), // auth database: plain id, no .references()
+  userId: uuid("user_id").notNull(), // auth database: plain id, no .references()
 });
 ```
 
