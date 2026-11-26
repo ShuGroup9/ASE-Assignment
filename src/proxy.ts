@@ -1,3 +1,10 @@
+/**
+ * @file src/proxy.ts
+ * @description Proxy for handling requests and setting Content-Security-Policy.
+ * @owner Kuba Gorski (@gitbob2000)
+ * @slice Slice1
+ */
+
 import { type NextRequest, NextResponse } from "next/server";
 
 /**
@@ -11,7 +18,7 @@ export function proxy(request: NextRequest) {
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    isDev ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' blob: data:",
     "font-src 'self'",
     "connect-src 'self'",

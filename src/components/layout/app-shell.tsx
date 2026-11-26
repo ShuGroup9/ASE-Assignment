@@ -35,7 +35,7 @@ export interface AppShellProps {
   children: ReactNode;
 }
 
-// The theme attribute is set before hydration by the inline script in src/app/layout.tsx,
+// The theme attribute is set before hydration by the inline script in root-document.tsx,
 // so the DOM is the source of truth and React subscribes to it.
 const subscribeToTheme = (onChange: () => void) => {
   const observer = new MutationObserver(onChange);
